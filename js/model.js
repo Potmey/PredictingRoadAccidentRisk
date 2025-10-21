@@ -1,4 +1,4 @@
-// js/model.js
+// js/model.js  (fixed: use 'mae' metric)
 export function buildModel(kind, inputLen, lr=0.001){
   const m = tf.sequential();
   if (kind==='cnn1d'){
@@ -13,7 +13,8 @@ export function buildModel(kind, inputLen, lr=0.001){
   } else {
     throw new Error('Unknown model kind');
   }
-  m.compile({ optimizer: tf.train.adam(lr), loss: 'meanSquaredError', metrics: ['meanAbsoluteError'] });
+  // 👇 key fix: metrics should be 'mae' (not 'meanAbsoluteError')
+  m.compile({ optimizer: tf.train.adam(lr), loss: 'meanSquaredError', metrics: ['mae'] });
   return m;
 }
 
@@ -21,7 +22,16 @@ export async function fitModel(model, Xtr, ytr, epochs=10, batchSize=256, logFn)
   const xt=tf.tensor2d(Xtr), yt=tf.tensor2d(ytr);
   const h = await model.fit(xt, yt, {
     epochs, batchSize, validationSplit: 0.1,
-    callbacks: { onEpochEnd: (ep, logs)=> logFn?.(`ep ${ep+1}/${epochs} loss=${logs.loss.toFixed(6)} val_loss=${(logs.val_loss??0).toFixed(6)} mae=${logs.meanAbsoluteError.toFixed(6)}`) }
+    callbacks: {
+      onEpochEnd: (ep, logs)=> {
+        // 👇 key fix: read logs.mae / logs.val_mae
+        const loss = logs.loss?.toFixed(6);
+        const vloss = (logs.val_loss??0).toFixed(6);
+        const mae = (logs.mae??0).toFixed(6);
+        const vmae = (logs.val_mae??0).toFixed(6);
+        logFn?.(`ep ${ep+1}/${epochs} loss=${loss} val_loss=${vloss} mae=${mae} val_mae=${vmae}`);
+      }
+    }
   });
   xt.dispose(); yt.dispose();
   return h;
