@@ -131,11 +131,11 @@ export class DataLoader {
   getTest(){ return this.idx.test.map(i=>this.X[i]); }
   getTestY(){ return this.idx.test.map(i=>this.y[i]); }
 
-  // === Simulation UI ===
+  // ===== Simulation UI (includes time→category) =====
   buildSimulationForm(container) {
     container.innerHTML='';
     const add = (html)=>{ const d=document.createElement('div'); d.innerHTML=html.trim(); return container.appendChild(d.firstElementChild); };
-    // categorical helpers
+    // helpers
     const cat = (id, label, values)=> add(`
       <div><label>${label}</label>
         <select id="${id}">
@@ -153,8 +153,13 @@ export class DataLoader {
       <div><label>${label}</label>
         <input id="${id}" type="number" step="${step}" value="${val}" />
       </div>`);
+    const time = (id,label,val='08:00')=> add(`
+      <div><label>${label} (pick exact time)</label>
+        <input id="${id}" type="time" value="${val}" />
+        <div class="muted" id="${id}_badge" style="margin-top:4px;font-size:12px">→ morning</div>
+      </div>`);
 
-    // fixed 14 fields (take values/stats from schema when available)
+    // fixed 14 fields (using schema values/stats where possible)
     const F=this.schema.features;
     cat('sim_road_type','road_type', F.road_type?.values||['urban','rural','highway']);
     num('sim_num_lanes','num_lanes','1', String(F.num_lanes?.stats?.mean??2|0));
@@ -164,7 +169,16 @@ export class DataLoader {
     cat('sim_weather','weather', F.weather?.values||['clear','rainy','foggy']);
     bool('sim_road_signs_present','road_signs_present');
     bool('sim_public_road','public_road');
-    cat('sim_time_of_day','time_of_day', F.time_of_day?.values||['morning','afternoon','evening']);
+
+    // 🔸 time_of_day: choose time → auto map to {morning, afternoon, evening}
+    time('sim_clock','time_of_day');
+    // initialize badge
+    const clockEl = document.getElementById('sim_clock');
+    const badgeEl = document.getElementById('sim_clock_badge');
+    const updateBadge = () => { badgeEl.textContent = `→ ${this.#clockToCategory(clockEl.value)}`; };
+    updateBadge();
+    clockEl.addEventListener('input', updateBadge);
+
     bool('sim_holiday','holiday');
     bool('sim_school_season','school_season');
     num('sim_num_reported_accidents','num_reported_accidents','1', String(F.num_reported_accidents?.stats?.mean??0|0));
@@ -173,6 +187,7 @@ export class DataLoader {
   // read form and encode → scaled vector ready for model
   encodeSimulationInput() {
     const o = (id)=>document.getElementById(id).value;
+    const time_of_day = this.#clockToCategory(o('sim_clock')); // ← derived from time input
     const sample = {
       road_type: o('sim_road_type'),
       num_lanes: Number(o('sim_num_lanes')),
@@ -182,11 +197,12 @@ export class DataLoader {
       weather: o('sim_weather'),
       road_signs_present: o('sim_road_signs_present'),
       public_road: o('sim_public_road'),
-      time_of_day: o('sim_time_of_day'),
+      time_of_day, // ← use derived category
       holiday: o('sim_holiday'),
       school_season: o('sim_school_season'),
       num_reported_accidents: Number(o('sim_num_reported_accidents'))
     };
+
     // encode like training
     const row=[];
     let col=0;
@@ -209,6 +225,18 @@ export class DataLoader {
       }
     }
     return row;
+  }
+
+  // Map HH:MM → {morning, afternoon, evening}
+  #clockToCategory(hhmm){
+    // default 08:00 if empty
+    const [hStr,mStr] = (hhmm||'08:00').split(':');
+    const h = Math.max(0, Math.min(23, parseInt(hStr||'8',10)));
+    const m = Math.max(0, Math.min(59, parseInt(mStr||'0',10)));
+    const t = h + m/60;
+    if (t < 12) return 'morning';
+    if (t < 18) return 'afternoon';
+    return 'evening';
   }
 
   #shuffle(a, seed=123){
