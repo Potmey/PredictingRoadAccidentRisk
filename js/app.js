@@ -1,4 +1,4 @@
-// js/app.js
+// js/app.js  (fixed log text to match 'mae')
 import { DataLoader } from './data-loader.js';
 import { buildModel, fitModel, predictOne, evaluateAccuracy } from './model.js';
 
@@ -25,14 +25,14 @@ async function onTrain(){
     MODEL?.dispose?.(); MODEL = buildModel(arch, featNames.length, 0.001);
     log(`Params: ${MODEL.countParams().toLocaleString()}`);
 
-    setStatus('training…'); log('Start fit (epochs=10, batch=256, valSplit=0.1)');
+    setStatus('training…'); 
+    log('Start fit (epochs=10, batch=256, valSplit=0.1) — tracking loss/val_loss/mae/val_mae');
     await fitModel(MODEL, LOADER.getTrain(), LOADER.getTrainY(), 10, 256, log);
 
     setStatus('testing…'); log('Evaluate accuracy on full test (thr=0.5)');
     const acc = evaluateAccuracy(MODEL, LOADER.getTest(), LOADER.getTestY(), 0.5);
     $('testAcc').textContent = `${(acc*100).toFixed(2)}%`;
 
-    // build simulation form and enable it
     LOADER.buildSimulationForm($('simGrid'));
     $('simFs').disabled = false; $('simCard').style.opacity='1';
     READY = true;
