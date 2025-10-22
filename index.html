@@ -1,9 +1,10 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Road Accident Risk — MLP Model</title>
+  <title>Road Accident Risk — Minimal Demo</title>
   <style>
     :root { --gap: 10px; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial; margin: 20px; line-height: 1.45; }
@@ -29,7 +30,7 @@
   </style>
 </head>
 <body>
-  <h1>Road Accident Risk — MLP Model_v3</h1>
+  <h1>Road Accident Risk — Minimal Demo</h1>
   <div class="badges">
     <span class="badge" id="tfver">TF.js: …</span>
     <span class="badge" id="status">Status: ready</span>
@@ -38,38 +39,42 @@
   <div class="card" style="margin-top:12px">
     <div class="controls">
       <div>
+        <label>Model</label>
+        <select id="arch">
+          <option value="cnn1d" selected>CNN-1D (over features)</option>
+          <option value="mlp">MLP (tabular)</option>
+        </select>
+      </div>
+      <div>
         <label>Action</label>
-        <button id="btnTrain" class="primary">Train</button>
+        <button id="btnTrain" class="primary">Train (Load → Fit → Test)</button>
       </div>
       <div>
-        <label>Number of Layers</label>
-        <input id="numLayers" type="number" min="1" max="10" value="3"/>
-      </div>
-      <div>
-        <label>Neurons per Layer</label>
-        <input id="neuronsPerLayer" type="number" min="10" max="512" value="128"/>
-      </div>
-      <div>
-        <label>Epochs</label>
-        <input id="epochs" type="number" min="1" max="100" value="10"/>
-      </div>
-      <div>
-        <label>Batch Size</label>
-        <input id="batchSize" type="number" min="16" max="256" value="128"/>
-      </div>
-      <div>
-        <label>Learning Rate</label>
-        <input id="learningRate" type="number" step="0.0001" min="0.0001" max="0.01" value="0.001"/>
+        <label>Test Accuracy (≥ 0.5)</label>
+        <div id="testAcc" class="pill">—</div>
       </div>
     </div>
     <div class="muted" style="margin-top:6px;font-size:12px">
-      Training and model evaluation on the test data.
+      Training fetches <code>./data/train.csv</code>, splits 80/20, trains selected model, then reports binarized accuracy on test (<code>thr=0.5</code>).
     </div>
   </div>
 
-  <div class="card" style="margin-top:12px">
-    <div style="font-weight:600; margin-bottom:6px">Test Accuracy</div>
-    <div id="testAcc" class="pill">—</div>
+  <div class="card" style="margin-top:12px; opacity:0.6" id="simCard">
+    <div style="font-weight:600; margin-bottom:6px">Simulation (enabled after training)</div>
+    <fieldset disabled id="simFs">
+      <legend>Set all criteria and press “Predict Risk”</legend>
+      <div class="controls" id="simGrid">
+        <!-- form fields will be injected dynamically after data load -->
+      </div>
+      <div class="row" style="margin-top:10px; align-items:center">
+        <div>
+          <button id="btnPredict" class="">Predict Risk</button>
+        </div>
+        <div>
+          <span id="riskOut" class="risk">—</span>
+        </div>
+      </div>
+    </fieldset>
   </div>
 
   <div class="card" style="margin-top:12px">
