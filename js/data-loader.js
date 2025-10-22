@@ -130,7 +130,14 @@ export class DataLoader {
   getTrainY(){ return this.idx.train.map(i=>this.y[i]); }
   getTest(){ return this.idx.test.map(i=>this.X[i]); }
   getTestY(){ return this.idx.test.map(i=>this.y[i]); }
+  
+    // ===== EDA Functions =====
+  performEDA() {
+    this.visualizeEDA();
+    this.handleMissingData();
+    this.checkCorrelations();}
 
+  
   // ===== Simulation UI (includes time→category) =====
   buildSimulationForm(container) {
     container.innerHTML='';
