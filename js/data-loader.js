@@ -244,9 +244,3 @@ export class DataLoader {
     for (let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   }
 }
-import { visualizeEDA, handleMissingData, checkCorrelations } from './eda.js';
-
-// В DataLoader
-visualizeEDA(this.raw);
-handleMissingData(this.raw);
-checkCorrelations(this.raw);
