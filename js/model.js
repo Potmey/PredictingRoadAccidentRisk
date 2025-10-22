@@ -1,25 +1,20 @@
-// js/model.js  (adding parameters to the model, but no influence yet)
-export function buildModel(kind, inputLen, lr=0.001, layers=2, neurons=128, activation='relu', optimizer='adam'){
+// js/model.js  (fixed: use 'mae' metric)
+export function buildModel(kind, inputLen, lr=0.001){
   const m = tf.sequential();
-  
-  // Add the initial layer
-  m.add(tf.layers.dense({units: neurons, activation, inputShape: [inputLen]}));
-  
-  // Add the requested number of layers
-  for (let i = 1; i < layers; i++) {
-    m.add(tf.layers.dense({units: neurons, activation}));
+  if (kind==='cnn1d'){
+    m.add(tf.layers.reshape({targetShape:[inputLen,1], inputShape:[inputLen]}));
+    m.add(tf.layers.conv1d({filters:32, kernelSize:3, activation:'relu', padding:'same'}));
+    m.add(tf.layers.globalAveragePooling1d());
+    m.add(tf.layers.dense({units:1, activation:'sigmoid'}));
+  } else if (kind==='mlp'){
+    m.add(tf.layers.dense({units:128, activation:'relu', inputShape:[inputLen]}));
+    m.add(tf.layers.dense({units:64, activation:'relu'}));
+    m.add(tf.layers.dense({units:1, activation:'sigmoid'}));
+  } else {
+    throw new Error('Unknown model kind');
   }
-
-  // Final output layer
-  m.add(tf.layers.dense({units: 1, activation:'sigmoid'}));
-
-  // Compile the model with the selected optimizer
-  m.compile({
-    optimizer: optimizer,
-    loss: 'meanSquaredError',
-    metrics: ['mae']
-  });
-  
+  // 👇 key fix: metrics should be 'mae' (not 'meanAbsoluteError')
+  m.compile({ optimizer: tf.train.adam(lr), loss: 'meanSquaredError', metrics: ['mae'] });
   return m;
 }
 
@@ -29,6 +24,7 @@ export async function fitModel(model, Xtr, ytr, epochs=10, batchSize=256, logFn)
     epochs, batchSize, validationSplit: 0.1,
     callbacks: {
       onEpochEnd: (ep, logs)=> {
+        // 👇 key fix: read logs.mae / logs.val_mae
         const loss = logs.loss?.toFixed(6);
         const vloss = (logs.val_loss??0).toFixed(6);
         const mae = (logs.mae??0).toFixed(6);
