@@ -1,15 +1,22 @@
 import { DataLoader } from './data-loader.js';
 import { buildModel, fitModel, predictOne, evaluateAccuracy } from './model.js';
 
-const $ = (id)=>document.getElementById(id);
-const log = (msg)=>{ const t=new Date().toLocaleTimeString(); const el=$('log'); el.textContent = (el.textContent==='—'?'':el.textContent+'\n')+`[${t}] ${msg}`; el.scrollTop=el.scrollHeight; };
-const setStatus = (s)=> $('status').textContent = `Status: ${s}`;
-function setTfVer(){ $('tfver').textContent = `TF.js: ${tf?.version_core||'unknown'}`; }
+const $ = (id) => document.getElementById(id);
+const log = (msg) => {
+  const t = new Date().toLocaleTimeString();
+  const el = $('log');
+  el.textContent = (el.textContent === '—' ? '' : el.textContent + '\n') + `[${t}] ${msg}`;
+  el.scrollTop = el.scrollHeight;
+};
+const setStatus = (s) => $('status').textContent = `Status: ${s}`;
+function setTfVer() { 
+  $('tfver').textContent = `TF.js: ${tf?.version_core || 'unknown'}`; 
+}
 
-let LOADER=null, MODEL=null, READY=false;
+let LOADER = null, MODEL = null, READY = false;
 
-async function onTrain(){
-  try{
+async function onTrain() {
+  try {
     disable(true);
     setStatus('loading data…'); log('Loading ./data/train.csv');
     if (!LOADER) LOADER = new DataLoader(log, setStatus);
@@ -37,20 +44,20 @@ async function onTrain(){
 
     setStatus('testing…'); log('Evaluate accuracy on full test (thr=0.5)');
     const acc = evaluateAccuracy(MODEL, LOADER.getTest(), LOADER.getTestY(), 0.5);
-    $('testAcc').textContent = `${(acc*100).toFixed(2)}%`;
+    $('testAcc').textContent = `${(acc * 100).toFixed(2)}%`;
 
     LOADER.buildSimulationForm($('simGrid'));
-    $('simFs').disabled = false; $('simCard').style.opacity='1';
+    $('simFs').disabled = false; $('simCard').style.opacity = '1';
     READY = true;
     setStatus('done'); log('Training finished. Simulation enabled.');
-  } catch(e){
+  } catch (e) {
     console.error(e); log('Error: ' + e.message); setStatus('error');
-  } finally{
+  } finally {
     disable(false);
   }
 }
 
-function disable(b){
+function disable(b) {
   $('btnTrain').disabled = b;
   $('numLayers').disabled = b;
   $('neuronsPerLayer').disabled = b;
@@ -59,10 +66,14 @@ function disable(b){
   $('learningRate').disabled = b;
 }
 
-function main(){
+function main() {
   setTfVer(); setStatus('ready');
   $('btnTrain').onclick = onTrain;
   disable(false);
 }
 
-if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', main); } else { main(); }
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', main);
+} else {
+  main();
+}
