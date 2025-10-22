@@ -1,4 +1,4 @@
-// js/app.js  (updated to reflect model settings)
+// js/app.js  (fixed log text to match 'mae')
 import { DataLoader } from './data-loader.js';
 import { buildModel, fitModel, predictOne, evaluateAccuracy } from './model.js';
 
@@ -21,13 +21,8 @@ async function onTrain(){
     log(`Features after encoding: ${featNames.length}`);
 
     const arch = $('arch').value;
-    const layers = Number($('layers').value);
-    const neurons = Number($('neurons').value);
-    const activation = $('activation').value;
-    const optimizer = $('optimizer').value;
-
     setStatus('building model…'); log(`Building model: ${arch}`);
-    MODEL?.dispose?.(); MODEL = buildModel(arch, featNames.length, 0.001, layers, neurons, activation, optimizer);
+    MODEL?.dispose?.(); MODEL = buildModel(arch, featNames.length, 0.001);
     log(`Params: ${MODEL.countParams().toLocaleString()}`);
 
     setStatus('training…'); 
